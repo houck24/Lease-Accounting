@@ -1,5 +1,0 @@
-services:
-  - type: web
-    name: sow-generator
-    env: docker
-    plan: free
