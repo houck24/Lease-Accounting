@@ -1,5 +1,15 @@
+version: 1
 services:
   - type: web
     name: sow-generator
-    env: docker
+    env: python
+    buildCommand: |
+      mkdir -p ~/.fonts
+      cp fonts/*.TTF ~/.fonts/
+      fc-cache -f -v
+    startCommand: python app.py
     plan: free
+    autoDeploy: true
+    environment:
+      PORT: 5000
+``*
