@@ -1,0 +1,24 @@
+version: 1
+services:
+  - type: web
+    name: sow-generator
+    env: python
+    buildCommand: |
+      # Create a directory for the fonts
+      mkdir -p /usr/local/share/fonts/custom
+
+      # List font files in the expected location
+      echo "Listing SAGE font files:"
+      ls -al /app/fonts/SAGE*.TTF  # Adjust path if needed
+
+      # Copy font files to the new directory
+      cp /app/fonts/SAGE*.TTF /usr/local/share/fonts/custom/
+
+      # Update font cache
+      fc-cache -f -v
+
+    startCommand: python app.py
+    plan: free
+    autoDeploy: true
+    environment:
+      PORT: 5000
