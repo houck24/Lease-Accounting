@@ -22,7 +22,7 @@ HTML_FORM = '''
     </style>
 </head>
 <body>
-    <h1>📄 SOW Generator</h1>
+    <h1>SOW Generator</h1>
     <form method="POST">
         <label>Client Name:</label>
         <input type="text" name="client_name" required placeholder="Enter client name">
@@ -36,24 +36,17 @@ HTML_FORM = '''
 </html>
 '''
 
+
 def fill_content_controls(doc_path, output_path, replacements):
-    """
-    Fill Word Content Controls in order of appearance.
-    replacements = [client_name, hours]
-    """
     doc = Document(doc_path)
-    
     replacement_index = 0
     
-    # Iterate through all content controls (sdt elements)
     for sdt in doc.element.iter(qn('w:sdt')):
         if replacement_index >= len(replacements):
             break
         
-        # Find the content part of the control
         sdt_content = sdt.find(qn('w:sdtContent'))
         if sdt_content is not None:
-            # Find text elements within the content control
             for text_elem in sdt_content.iter(qn('w:t')):
                 if text_elem.text and 'Click or tap here' in text_elem.text:
                     text_elem.text = str(replacements[replacement_index])
@@ -65,14 +58,41 @@ def fill_content_controls(doc_path, output_path, replacements):
 
 
 def convert_to_pdf(docx_path, output_dir):
-    """Convert DOCX to PDF using LibreOffice"""
     subprocess.run([
-        'libreoffice', 
-        '--headless', 
+        'libreoffice',
+        '--headless',
         '--convert-to', 'pdf',
-        '--outdir', output_dir, 
+        '--outdir', output_dir,
         docx_path
     ], check=True)
 
 
 @app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        client_name = request.form['client_name']
+        hours = request.form['hours']
+        
+        replacements = [client_name, hours]
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_dir = 'output'
+        output_docx = f'{output_dir}/SOW_{timestamp}.docx'
+        output_pdf = f'{output_dir}/SOW_{timestamp}.pdf'
+        
+        os.makedirs(output_dir, exist_ok=True)
+        
+        fill_content_controls('template.docx', output_docx, replacements)
+        convert_to_pdf(output_docx, output_dir)
+        
+        return send_file(
+            output_pdf,
+            as_attachment=True,
+            download_name=f'SOW_{client_name}.pdf'
+        )
+    
+    return render_template_string(HTML_FORM)
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
